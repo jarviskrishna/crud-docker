@@ -5,30 +5,137 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>myapp · Notes</title>
   <style>
-    body { font-family: -apple-system, system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; color: #222; }
-    h1 { font-size: 24px; margin-bottom: 4px; }
-    #version { color: #666; font-size: 13px; margin-bottom: 24px; }
-    form { display: flex; gap: 8px; margin-bottom: 24px; }
-    input { flex: 1; padding: 8px; font-size: 15px; border: 1px solid #bbb; border-radius: 6px; }
-    button { padding: 8px 12px; font-size: 14px; border: 1px solid #bbb; border-radius: 6px; background: #fff; cursor: pointer; }
-    button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-    ul { list-style: none; padding: 0; }
-    li { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #eee; }
-    li span { flex: 1; }
-    .error { color: #b91c1c; }
+    :root {
+      --bg: #f4f5f7;
+      --card: #ffffff;
+      --text: #1f2328;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --danger: #dc2626;
+      --ok: #16a34a;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1115;
+        --card: #181b21;
+        --text: #e6e8eb;
+        --muted: #9aa1ab;
+        --border: #2a2f37;
+        --accent: #3b82f6;
+        --accent-hover: #60a5fa;
+        --shadow: none;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 48px 16px; }
+
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
+    .meta { display: flex; gap: 8px; align-items: center; }
+    .badge {
+      font-size: 12px; padding: 3px 10px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--card); color: var(--muted);
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .dot.ok { background: var(--ok); }
+    .dot.down { background: var(--danger); }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
+    form.add { display: flex; gap: 8px; padding: 12px; margin-bottom: 20px; }
+    input[type=text] {
+      flex: 1; min-width: 0; padding: 10px 12px; font: inherit; color: inherit;
+      background: transparent; border: 1px solid var(--border); border-radius: 8px; outline: none;
+    }
+    input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+
+    button {
+      font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 8px; cursor: pointer;
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+    }
+    button:hover { background: rgba(127, 127, 127, 0.08); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    button.primary:hover { background: var(--accent-hover); }
+    button.danger:hover { color: var(--danger); border-color: var(--danger); background: transparent; }
+    button:disabled { opacity: 0.5; cursor: default; }
+
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin: 0 4px 10px; color: var(--muted); font-size: 13px; }
+
+    ul { list-style: none; margin: 0; padding: 0; }
+    li { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--border); }
+    li:first-child { border-top: none; }
+    .id { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 28px; }
+    .body { flex: 1; min-width: 0; }
+    .text { word-wrap: break-word; }
+    .time { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .actions { display: flex; gap: 6px; flex-shrink: 0; }
+    li.editing input { width: 100%; }
+
+    .empty { text-align: center; padding: 40px 16px; color: var(--muted); display: block; }
+    .empty strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 4px; }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+      background: var(--danger); color: #fff; padding: 10px 16px; border-radius: 8px;
+      font-size: 14px; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none;
+      max-width: calc(100% - 32px);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 480px) {
+      header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      li { flex-wrap: wrap; }
+      .actions { width: 100%; justify-content: flex-end; }
+    }
   </style>
 </head>
 <body>
-  <h1>Notes</h1>
-  <div id="version"></div>
-  <form id="add">
-    <input id="text" placeholder="Write a note" required>
-    <button class="primary">Add</button>
-  </form>
-  <ul id="notes"></ul>
+  <div class="wrap">
+    <header>
+      <h1>Notes</h1>
+      <div class="meta">
+        <span class="badge"><span id="dot" class="dot"></span><span id="status">connecting…</span></span>
+        <span class="badge" id="version">version –</span>
+      </div>
+    </header>
+
+    <form class="add card" id="add">
+      <input type="text" id="text" placeholder="Write a note and press Enter" autocomplete="off" required>
+      <button class="primary" type="submit">Add note</button>
+    </form>
+
+    <div class="toolbar">
+      <span id="count">0 notes</span>
+      <span>Stored in PostgreSQL</span>
+    </div>
+
+    <div class="card">
+      <ul id="notes"></ul>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 
   <script>
     const list = document.getElementById("notes");
+    const toastEl = document.getElementById("toast");
+    let toastTimer;
+
+    function toast(message) {
+      toastEl.textContent = message;
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 3500);
+    }
 
     async function api(method, url, body) {
       const res = await fetch(url, {
@@ -36,46 +143,125 @@
         headers: { "Content-Type": "application/json" },
         body: body ? JSON.stringify(body) : undefined,
       });
-      if (!res.ok) throw new Error(`${method} ${url} failed: ${res.status}`);
+      if (!res.ok) throw new Error(`${method} ${url} failed (${res.status})`);
       return res.status === 204 ? null : res.json();
+    }
+
+    function timeAgo(iso) {
+      const s = Math.round((Date.now() - new Date(iso)) / 1000);
+      if (s < 60) return "just now";
+      if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+      if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+      return new Date(iso).toLocaleDateString();
+    }
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function renderNote(note) {
+      const li = el("li");
+      const id = el("span", "id", `#${note.id}`);
+      const body = el("div", "body");
+      const text = el("div", "text", note.text);
+      const edited = note.updated_at !== note.created_at;
+      const time = el("div", "time", edited ? `edited ${timeAgo(note.updated_at)}` : `added ${timeAgo(note.created_at)}`);
+      body.append(text, time);
+
+      const actions = el("div", "actions");
+      const editBtn = el("button", "", "Edit");
+      const delBtn = el("button", "danger", "Delete");
+      actions.append(editBtn, delBtn);
+
+      editBtn.onclick = () => {
+        li.classList.add("editing");
+        const input = el("input");
+        input.type = "text";
+        input.value = note.text;
+        body.replaceChildren(input);
+        const save = el("button", "primary", "Save");
+        const cancel = el("button", "", "Cancel");
+        actions.replaceChildren(save, cancel);
+        input.focus();
+        input.select();
+
+        const doSave = async () => {
+          const value = input.value.trim();
+          if (!value) return input.focus();
+          try {
+            await api("PUT", `/api/notes/${note.id}`, { text: value });
+            load();
+          } catch (err) { toast(err.message); }
+        };
+        save.onclick = doSave;
+        cancel.onclick = load;
+        input.onkeydown = (e) => {
+          if (e.key === "Enter") doSave();
+          if (e.key === "Escape") load();
+        };
+      };
+
+      delBtn.onclick = async () => {
+        delBtn.disabled = true;
+        try {
+          await api("DELETE", `/api/notes/${note.id}`);
+          load();
+        } catch (err) { delBtn.disabled = false; toast(err.message); }
+      };
+
+      li.append(id, body, actions);
+      return li;
     }
 
     async function load() {
       try {
         const notes = await api("GET", "/api/notes");
-        list.innerHTML = "";
-        for (const note of notes) {
-          const li = document.createElement("li");
-          const span = document.createElement("span");
-          span.textContent = `#${note.id} ${note.text}`;
-          const edit = document.createElement("button");
-          edit.textContent = "Edit";
-          edit.onclick = async () => {
-            const text = prompt("Edit note", note.text);
-            if (text) { await api("PUT", `/api/notes/${note.id}`, { text }); load(); }
-          };
-          const del = document.createElement("button");
-          del.textContent = "Delete";
-          del.onclick = async () => { await api("DELETE", `/api/notes/${note.id}`); load(); };
-          li.append(span, edit, del);
-          list.append(li);
+        document.getElementById("count").textContent = `${notes.length} note${notes.length === 1 ? "" : "s"}`;
+        if (notes.length === 0) {
+          const empty = el("li", "empty");
+          empty.append(el("strong", "", "No notes yet"), document.createTextNode("Add your first note above."));
+          list.replaceChildren(empty);
+          return;
         }
+        list.replaceChildren(...notes.map(renderNote));
       } catch (err) {
-        list.innerHTML = `<li class="error">${err.message}</li>`;
+        const empty = el("li", "empty");
+        empty.append(el("strong", "", "Can't load notes"), document.createTextNode(err.message));
+        list.replaceChildren(empty);
+      }
+    }
+
+    async function checkHealth() {
+      const dot = document.getElementById("dot");
+      const status = document.getElementById("status");
+      try {
+        const h = await api("GET", "/health");
+        dot.className = "dot ok";
+        status.textContent = "connected";
+        document.getElementById("version").textContent = `version ${h.version}`;
+      } catch {
+        dot.className = "dot down";
+        status.textContent = "offline";
       }
     }
 
     document.getElementById("add").onsubmit = async (e) => {
       e.preventDefault();
       const input = document.getElementById("text");
-      await api("POST", "/api/notes", { text: input.value });
-      input.value = "";
-      load();
+      const value = input.value.trim();
+      if (!value) return;
+      try {
+        await api("POST", "/api/notes", { text: value });
+        input.value = "";
+        load();
+      } catch (err) { toast(err.message); }
     };
 
-    api("GET", "/health").then((h) => {
-      document.getElementById("version").textContent = `version ${h.version}`;
-    });
+    checkHealth();
+    setInterval(checkHealth, 10000);
     load();
   </script>
 </body>
